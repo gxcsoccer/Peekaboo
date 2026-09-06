@@ -570,7 +570,17 @@ enum PeekabooBridgeDesktopObservationBinding {
             if let windowID = context.windowID, windowID != targetWindow.windowID {
                 return "window-context window ID"
             }
-            if let title = context.windowTitle, title != targetWindow.title {
+            // A window's identity is its window ID. The title is decoration, and
+            // Accessibility and CoreGraphics decorate it differently for the same
+            // window: Preview reports "inv.pdf - 1 page" through AX and "inv.pdf"
+            // through CGWindowList, so a title comparison rejects every
+            // observation of it even though both APIs agree on the window.
+            //
+            // The title check still earns its place when the context carries no
+            // window ID, because then it is the only cross-check available.
+            if context.windowID == nil,
+               let title = context.windowTitle, title != targetWindow.title
+            {
                 return "window-context window title"
             }
             if let bounds = context.windowBounds, bounds != targetWindow.bounds {
